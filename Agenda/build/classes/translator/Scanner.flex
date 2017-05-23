@@ -113,7 +113,10 @@ return new Symbol(sym.EOF);
 "october"         {return new Symbol(sym.OCTOBER, yychar, yyline);}       
 "november"        {return new Symbol(sym.NOVEMBER, yychar, yyline);}       
 "december"        {return new Symbol(sym.DECEMBER, yychar, yyline);}
-"to"              {return new Symbol(sym.TO, yychar, yyline);}           
+"to"              {return new Symbol(sym.TO, yychar, yyline);} 
+"->"              {return new Symbol(sym.DISPLACE, yychar, yyline);} 
+"am"              {return new Symbol(sym.AM, yychar, yyline);}   
+"pm"              {return new Symbol(sym.PM, yychar, yyline);}            
 
 "long"            {return new Symbol(sym.LONG, yychar, yyline);}       
 "medium"          {return new Symbol(sym.MEDIUM, yychar, yyline);}         
@@ -127,7 +130,7 @@ return new Symbol(sym.EOF);
 "her"   {return new Symbol(sym.HER, yychar, yyline);} 
 "their"   {return new Symbol(sym.THEIR, yychar, yyline);} 
 "our"   {return new Symbol(sym.OUR, yychar, yyline);} 
- 
+ "/"       {return new Symbol(sym.SLASH, yychar, yyline);}
 
 ({MAYUS})({LETTER}|{DIGIT}|"_")* {
             {return new Symbol(sym.OBJECT, yychar, yyline, new String(yytext()));}
@@ -164,7 +167,7 @@ return new Symbol(sym.EOF);
             // since everything to end of line will be ignored
           }
 
-"/"       {return new Symbol(sym.SLASH, yychar, yyline);}
+
 
 
 .         { 
