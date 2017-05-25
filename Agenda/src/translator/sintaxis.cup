@@ -1,9 +1,7 @@
 package translator;
 import java_cup.runtime.*;
+import java.util.Date;
 
-/* The code below redefines method syntax_error to give better error messages
- * than just "Syntax error"
- */
 parser code {:
 public void syntax_error(Symbol s){
 System.out.println("Error en la linea "+(s.right+1)+"Columna"+s.left+" .Identificador "+s.value+" no reconocido ");
@@ -37,7 +35,7 @@ non terminal String nt_time_op;
 non terminal String nt_time;
 non terminal String nt_day;
 non terminal String nt_day_of_week;
-non terminal String nt_date_format;
+non terminal Date 	nt_date_format;
 non terminal String nt_time_op_close;
 non terminal String nt_sustantive;
 non terminal String nt_length;
@@ -86,28 +84,51 @@ nt_hour             ::= HOUR nt_meridian| INTLITERAL nt_meridian;
 
 nt_meridian			::= AM | PM | ;
 
-nt_day              ::= TODAY | nt_day_of_week | nt_date_format | /*si no pone nada aparece este error:*/{:System.out.println("que dia?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
+nt_day              ::= TODAY | nt_day_of_week 
+						{:
+							
+						:}
+						| nt_date_format | /*si no pone nada aparece este error:*/{:System.out.println("que dia?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
 
 nt_day_of_week      ::= MONDAY | TUESDAY | WEDNESDAY | THURSDAY | FRIDAY | SATURDAY | SUNDAY ;
 
 nt_date_format      ::= INTLITERAL:day {:
-						if(!DateValidation.validateDate(day)){
-							System.out.println("error en fecha");
-							CUP$parser$parser.report_fatal_error(RESULT, this);
-						};
+						RESULT=null;
+							if(!DateValidation.validateDate(day)){
+								System.out.println("error en fecha");
+								CUP$parser$parser.report_fatal_error(""+RESULT, this);
+							}
+							else{
+								int i_day=Integer.parseInt(day);
+								RESULT=DateUtils.getDate(i_day);
+							}
 						:}
 						| 
 						INTLITERAL:day SLASH INTLITERAL:month 
-						{:if(!DateValidation.validateDate(day, month)){
-							System.out.println("error en fecha");
-							CUP$parser$parser.report_fatal_error(RESULT, this);
-						};
+						{:	
+							RESULT=null;
+								if(!DateValidation.validateDate(day, month)){
+									System.out.println("error en fecha");
+									CUP$parser$parser.report_fatal_error(""+RESULT, this);
+								}
+								else{
+									int i_day=Integer.parseInt(day);
+									int i_month=Integer.parseInt(month);
+									RESULT=DateUtils.getDate(i_day,i_month);
+								}
 						:}|
 						 INTLITERAL:day SLASH INTLITERAL:month SLASH INTLITERAL:year {:
-						 	if(!DateValidation.validateDate(day, month, year)){
-							System.out.println("error en fecha");
-							CUP$parser$parser.report_fatal_error(RESULT, this);
-						};
+						 	RESULT=null;
+							 	if(!DateValidation.validateDate(day, month, year)){
+									System.out.println("error en fecha");
+									CUP$parser$parser.report_fatal_error(""+RESULT, this);
+								}
+								else{
+									int i_day=Integer.parseInt(day);
+									int i_month=Integer.parseInt(month);
+									int i_year=Integer.parseInt(year);
+									RESULT=DateUtils.getDate(i_day,i_month,i_year);
+								}
 						:};
 
 nt_time_op_close    ::= ON | IN | AT | /*vacio*/;
