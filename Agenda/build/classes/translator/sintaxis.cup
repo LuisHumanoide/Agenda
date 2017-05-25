@@ -32,14 +32,14 @@ non terminal String nt_change_action;
 non terminal String nt_type;
 non terminal String nt_relation_op;
 non terminal String nt_time_op;
-non terminal String nt_time;
-non terminal String nt_day;
+non terminal TimeRange nt_time;
+non terminal Date nt_day;
 non terminal String nt_day_of_week;
 non terminal Date 	nt_date_format;
 non terminal String nt_time_op_close;
 non terminal String nt_sustantive;
-non terminal String nt_length;
-non terminal String nt_hour;
+non terminal int nt_length;
+non terminal Date nt_hour;
 non terminal String nt_article;
 non terminal String nt_possesive;
 non terminal String nt_meridian;
@@ -49,13 +49,16 @@ start with nt_sentence;
 
 
 /* Grammar with actions
- *
+ *create date with Jalil at 8 long on tuesday
  * NOTE: add more grammar rules below
  */
 
 
-nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive nt_time_op nt_time nt_time_op_close nt_day
-                        {: System.out.println("CHIDO"); :}
+nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_time:t nt_time_op_close nt_day:d
+                        {: System.out.println("CHIDO"); 
+                        	Actions.createDate(s,t,d);
+
+                        :}
                         |
                         nt_delete_action nt_type nt_relation_op nt_sustantive nt_time_op_close nt_day
                         {: System.out.println("CHIDO"); :}
@@ -78,19 +81,34 @@ nt_relation_op      ::= WITH  | AT ;
 
 nt_time_op          ::= AT | FROM| ON | IN | /*VACIO*/;
 
-nt_time             ::= nt_hour nt_length | nt_hour TO nt_hour ;
+nt_time             ::= nt_hour:h nt_length:l 
+							{:RESULT=new TimeRange(h,DateUtils.getHourWithDuration(h,l));:}
+						| nt_hour:h1 TO nt_hour:h2
+							{:RESULT=new TimeRange(h1,h2);:};
 
-nt_hour             ::= HOUR nt_meridian| INTLITERAL nt_meridian;
+nt_hour             ::= HOUR:h nt_meridian:m 
+							{:RESULT=DateUtils.getHour(h,m);:}
+						| INTLITERAL:il nt_meridian:m
+							{:RESULT=DateUtils.getHour(Integer.parseInt(il),m);:};
 
-nt_meridian			::= AM | PM | ;
+nt_meridian			::= AM {:RESULT="am";:}| PM {:RESULT="pm";:}| {:RESULT="";:};
 
-nt_day              ::= TODAY | nt_day_of_week 
+nt_day              ::= TODAY 
 						{:
-							
+							RESULT=DateUtils.getToday();
 						:}
-						| nt_date_format | /*si no pone nada aparece este error:*/{:System.out.println("que dia?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
+						| nt_day_of_week:dayName
+						{:
+							RESULT=DateUtils.getProxDay(dayName);
+						:}
+						| nt_date_format:df
+						{:
+							RESULT=df;
+						:}
+						| /*si no pone nada aparece este error:*/{:System.out.println("que dia?");CUP$parser$parser.report_fatal_error(""+RESULT, this);:};
 
-nt_day_of_week      ::= MONDAY | TUESDAY | WEDNESDAY | THURSDAY | FRIDAY | SATURDAY | SUNDAY ;
+nt_day_of_week      ::= MONDAY:d {:RESULT="monday";:} | TUESDAY:d {:RESULT="tuesday";:}| WEDNESDAY:d {:RESULT="wednesday";:}| THURSDAY:d {:RESULT="thursday";:}| 
+						FRIDAY:d {:RESULT="friday";:}| SATURDAY:d {:RESULT="saturday";:}| SUNDAY:d {:RESULT="sunday";:};
 
 nt_date_format      ::= INTLITERAL:day {:
 						RESULT=null;
@@ -133,11 +151,12 @@ nt_date_format      ::= INTLITERAL:day {:
 
 nt_time_op_close    ::= ON | IN | AT | /*vacio*/;
 
-nt_sustantive       ::= OBJECT | nt_article OBJECT | nt_possesive OBJECT | /*si no pone nada aparece este error:*/{:System.out.println("con quien?");CUP$parser$parser.report_fatal_error(RESULT, this);:};   
+nt_sustantive       ::= OBJECT:o {:RESULT=o;:} | nt_article OBJECT:o {:RESULT=o;:}| nt_possesive OBJECT:o {:RESULT=o;:}| /*si no pone nada aparece este error:*/{:System.out.println("con quien?");CUP$parser$parser.report_fatal_error(RESULT, this);:};   
 
-nt_article          ::= THE;
+nt_article          ::= THE {:RESULT="the";:};
 
-nt_possesive        ::= MY| YOUR | ITS | HIS | HER | OUR | THEIR;
+nt_possesive        ::= MY {:RESULT="my";:}| YOUR {:RESULT="your";:}| ITS {:RESULT="its";:}| HIS{:RESULT="his";:} | HER {:RESULT="her";:}| OUR {:RESULT="our";:}| THEIR{:RESULT="their";:};
 
-nt_length           ::= SHORT | LONG | MEDIUM |/*si no pone nada aparece este error:*/{:System.out.println("duración?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
+nt_length           ::= SHORT {:RESULT=ConfigDuration.SHORT_DURATION;:}| LONG {:RESULT=ConfigDuration.LONG_DURATION;:}| 
+						MEDIUM {:RESULT=ConfigDuration.MEDIUM_DURATION;:} |/*si no pone nada aparece este error:*/{:System.out.println("duración?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
 

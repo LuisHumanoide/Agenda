@@ -30,7 +30,12 @@ public class DateUtils {
     }
     
     public static Date getToday(){
-        
+        Calendar calendar=Calendar.getInstance();
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        System.out.println(calendar.getTime());
+        return calendar.getTime();
     }
 
     /**
@@ -61,6 +66,7 @@ public class DateUtils {
         calendar.set(Calendar.HOUR, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
+        System.out.println(calendar.getTime());
         return calendar.getTime();
     }
 
@@ -139,6 +145,19 @@ public class DateUtils {
         calendar.set(Calendar.MONTH,month-1);
         calendar.set(Calendar.YEAR,year);
         System.out.println(calendar.getTime());
+        return calendar.getTime();
+    }
+    /**
+     * Obtengo la hora final a partir de la duración que le doy en minutos
+     * esta está definida en la clase ConfigDuration
+     * @param date
+     * @param duration
+     * @return 
+     */
+    public static Date getHourWithDuration(Date date, int duration){
+        Calendar calendar=Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.MINUTE, duration);
         return calendar.getTime();
     }
     

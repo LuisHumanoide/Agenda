@@ -85,7 +85,7 @@ public class testFrame extends javax.swing.JFrame {
         try {
             p.parse();
         } catch (Exception ex) {
-            System.out.println("error");
+            System.out.println("error"+ex.toString());
            // Logger.getLogger(testFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
