@@ -1,6 +1,8 @@
 package translator;
 import java_cup.runtime.*;
 import java.util.Date;
+import agenda.ConfigDuration;
+import agenda.Actions;
 
 parser code {:
 public void syntax_error(Symbol s){
@@ -38,7 +40,7 @@ non terminal String nt_day_of_week;
 non terminal Date 	nt_date_format;
 non terminal String nt_time_op_close;
 non terminal String nt_sustantive;
-non terminal int nt_length;
+non terminal Integer nt_length;
 non terminal Date nt_hour;
 non terminal String nt_article;
 non terminal String nt_possesive;
@@ -48,23 +50,36 @@ non terminal String nt_meridian;
 start with nt_sentence;
 
 
-/* Grammar with actions
+/* pruebas
  *create date with Jalil at 8 long on tuesday
- * NOTE: add more grammar rules below
+ *delete date with Doctor at 9 today
+ *update date with Migue from 8 today to 8 to 9 on friday
+ * 
  */
-
+/*REGLAS GRAMATICALES*/
 
 nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_time:t nt_time_op_close nt_day:d
                         {: System.out.println("CHIDO"); 
-                        	Actions.createDate(s,t,d);
+                        	Date start=DateUtils.mergeTimes(d,t.getTime1());
+                        	Date end=DateUtils.mergeTimes(d,t.getTime2());
+                        	Actions.createDate(s,start,end);
 
                         :}
                         |
-                        nt_delete_action nt_type nt_relation_op nt_sustantive nt_time_op_close nt_day
-                        {: System.out.println("CHIDO"); :}
+                        nt_delete_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_hour:h nt_time_op_close nt_day:d
+                        {: 
+                        	Date start=DateUtils.mergeTimes(d,h);
+                        	Actions.deleteDate(s,start);
+                        	System.out.println("CHIDO"); :}
                         |
-                        nt_change_action nt_type nt_relation_op nt_sustantive nt_time_op nt_hour nt_time_op_close nt_day TO nt_time nt_time_op_close nt_day
-                        {: System.out.println("CHIDO"); :}
+                        nt_change_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_hour:h nt_time_op_close nt_day:d TO nt_time:t2 nt_time_op_close nt_day:d2
+                        {: 
+                        	Date start1=DateUtils.mergeTimes(d,h);
+                        	Date start2=DateUtils.mergeTimes(d2,t2.getTime1());
+                        	Date end2=DateUtils.mergeTimes(d2,t2.getTime2());
+                        	Actions.updateDate(s,start1,start2,end2);
+                       	    System.out.println("CHIDO"); 
+                        :}
                         |errorlex {:System.out.println("errorlex");:};
 
 nt_action           ::= nt_create_action | nt_delete_action | nt_change_action | /*si no pone nada aparece este error:*/{:System.out.println("cual accion?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
@@ -158,5 +173,5 @@ nt_article          ::= THE {:RESULT="the";:};
 nt_possesive        ::= MY {:RESULT="my";:}| YOUR {:RESULT="your";:}| ITS {:RESULT="its";:}| HIS{:RESULT="his";:} | HER {:RESULT="her";:}| OUR {:RESULT="our";:}| THEIR{:RESULT="their";:};
 
 nt_length           ::= SHORT {:RESULT=ConfigDuration.SHORT_DURATION;:}| LONG {:RESULT=ConfigDuration.LONG_DURATION;:}| 
-						MEDIUM {:RESULT=ConfigDuration.MEDIUM_DURATION;:} |/*si no pone nada aparece este error:*/{:System.out.println("duración?");CUP$parser$parser.report_fatal_error(RESULT, this);:};
+						MEDIUM {:RESULT=ConfigDuration.MEDIUM_DURATION;:} |/*si no pone nada aparece este error:*/{:RESULT=0; System.out.println("duración?");CUP$parser$parser.report_fatal_error(""+RESULT, this);:};
 

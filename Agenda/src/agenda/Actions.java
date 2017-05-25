@@ -21,7 +21,7 @@ public class Actions {
      */
     public static boolean createDate(String name, Date start, Date end){
         //code
-        System.out.println(name+" "+start+" "+end);
+        System.out.println(name+" , "+start+" , "+end);
         return true;
     }
     
@@ -34,7 +34,7 @@ public class Actions {
      * @return 
      */
     public static boolean deleteDate(String name, Date start){
-        //code
+        System.out.println(name+" , "+start);
         return true;
     }
     
@@ -50,6 +50,7 @@ public class Actions {
      */
     public static boolean updateDate(String name, Date start1, Date start2, Date end2){
         //code
+        System.out.println(name+" , "+start1+" , "+start2+" , "+end2);
         return true;
     }
     

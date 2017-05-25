@@ -15,20 +15,10 @@ import java.util.GregorianCalendar;
  */
 public class DateUtils {
 
-    public static void main(String[] args) {
-       getDate(10,2,1998);
-    }
-
-    public Date getDate() {
-        Calendar cumpleCal = Calendar.getInstance();
-        cumpleCal.set(2010, 9, 27); //La hora no me interesa y recuerda que los meses van de 0 a 11
-        cumpleCal.add(Calendar.DAY_OF_YEAR, 7);
-        System.out.println(cumpleCal.getTime());
-        int dia = cumpleCal.get(Calendar.DAY_OF_WEEK);
-        System.out.println(dia); //Día 4 = WEDNESDAY = MIÉRCOLES
-        return null;
-    }
-    
+    /**
+     * obtiene la fecha del día de hoy
+     * @return 
+     */
     public static Date getToday(){
         Calendar calendar=Calendar.getInstance();
         calendar.set(Calendar.HOUR, 0);
@@ -158,6 +148,23 @@ public class DateUtils {
         Calendar calendar=Calendar.getInstance();
         calendar.setTime(date);
         calendar.add(Calendar.MINUTE, duration);
+        return calendar.getTime();
+    }
+    /**
+     * se encarga de juntar la fecha y la hora en un solo objeto de fecha
+     * @param date
+     * @param hour
+     * @return 
+     */
+    public static Date mergeTimes(Date date, Date hour){
+        Calendar calendar=Calendar.getInstance();
+        Calendar calendar2=Calendar.getInstance();
+        calendar.setTime(date);
+        calendar2.setTime(hour);
+        calendar.set(Calendar.HOUR, calendar2.get(Calendar.HOUR));
+        calendar.set(Calendar.MINUTE, calendar2.get(Calendar.MINUTE));
+        calendar.set(Calendar.SECOND, calendar2.get(Calendar.SECOND));
+        calendar.add(Calendar.DAY_OF_MONTH, calendar2.get(Calendar.DAY_OF_YEAR)-1);
         return calendar.getTime();
     }
     
