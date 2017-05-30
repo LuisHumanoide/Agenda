@@ -12,11 +12,14 @@ import jade.lang.acl.ACLMessage;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
 import javax.swing.JOptionPane;
+import translator.DataFromParser;
+import translator.parser;
 
 /**
  * Enumeration ePriorityCategories is used to differentiate the category to which an Appointment belongs,
@@ -167,21 +170,11 @@ public class AgendaAgent extends Agent{
                 ACLMessage msg = receive();
                 if (msg != null) {
                     try {
-                        String opinion = null;
-                        //aqui esta chafa, si contiene la oración 'que opinas' entonces el mensaje es de consulta
-                        if (msg.getContent().toLowerCase().contains("que opinas")) {
-                            //opinion = Opiniones.findOpinion((Agente) this.myAgent, msg.getContent());
-                        }
-                        //si el mensaje contiene 'se que', entonces se cambia la opinion del agente dado
-                        if (msg.getContent().toLowerCase().contains("se que")) {
-                            //Opiniones.modifyOpinion((Agente) this.myAgent, msg.getContent(), msg.getContent().replaceAll("se que", ""));
-                        }
-                        //si la opinion no es nula, la muestra
-                        if (opinion != null) {
-                            //JOptionPane.showMessageDialog(null, opinion);
-                        }
+                     //process the message               
+                         ProcessMessage(msg);
                     } catch (Exception ex) {
                         //ocurrió una excepción
+                        System.out.println(ex.toString());
                     }
                 } else {
                     block();
@@ -200,6 +193,9 @@ public class AgendaAgent extends Agent{
      */
     protected void ProcessMessage(ACLMessage in_pACLMessage)
     {
+        //the action message is created
+        ActionMessage actionMessage;
+        //actionMessage=getActionMessage(in_pACLMessage.getContent());
         System.out.println("Entered ProcessMessage method. with the ACL message: " + in_pACLMessage.toString());
         /*Switch used to decide which action must be taken BASED ON THE PERFORMATIVE, 
         but another switch will be used, depending on which of "Create/Delete/Move" is desired. */
@@ -331,5 +327,20 @@ public class AgendaAgent extends Agent{
     protected void takeDown()
     {
         System.out.println("TakeDown method of AgendaAgent");
+    }
+    /**
+     * get Action Message from the parser
+     * @param string is the string to parse
+     * @return 
+     */
+    ActionMessage getActionMessage(String string) throws NullPointerException{
+        ActionMessage am = DataFromParser.getAm(string);
+        if(am==null){
+            throw new NullPointerException("Action Message is null, the parse process was done wrong");
+        }
+        else{
+            System.out.println(am.toString());
+        }
+        return am;
     }
 }

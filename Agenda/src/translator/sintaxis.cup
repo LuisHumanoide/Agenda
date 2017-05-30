@@ -2,15 +2,18 @@ package translator;
 import java_cup.runtime.*;
 import java.util.Date;
 import agenda.ConfigDuration;
-import agenda.Actions;
-
+import agenda.ActionMessage;
+import agenda.eAction;
 parser code {:
+    parser s;
+    parser(parser s){ this.s=s; }
 public void syntax_error(Symbol s){
 System.out.println("Error en la linea "+(s.right+1)+"Columna"+s.left+" .Identificador "+s.value+" no reconocido ");
 }
 :}
 action code{:
 //AQUI VAN LAS DECLARACIONES DE VARIABLES PARA LA ACCIÓN DEL PROGRAMA
+	ActionMessage actionMessage;
 :}
 
 
@@ -21,7 +24,7 @@ terminal String LONG, MEDIUM, SHORT, OBJECT, SLASH, HOUR;
 terminal String INTLITERAL;
 terminal  String THE,  MY,  YOUR,  ITS,  HIS,  HER,  THEIR,  OUR, TO, errorlex, STRINGLITERAL, DISPLACE, AM, PM;
 
-//create date with Aas at 8 long on 8/9/7
+//create date with Aas at 8 long on 8/9/2017
 
 /* no terminales, reglas de la gramática
  */
@@ -62,14 +65,14 @@ nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive:s 
                         {: System.out.println("CHIDO"); 
                         	Date start=DateUtils.mergeTimes(d,t.getTime1());
                         	Date end=DateUtils.mergeTimes(d,t.getTime2());
-                        	Actions.createDate(s,start,end);
+                        	actionMessage=new ActionMessage(eAction.CREATE,s,start,end);
 
                         :}
                         |
                         nt_delete_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_hour:h nt_time_op_close nt_day:d
                         {: 
                         	Date start=DateUtils.mergeTimes(d,h);
-                        	Actions.deleteDate(s,start);
+                        	actionMessage=new ActionMessage(eAction.DELETE,s,start);
                         	System.out.println("CHIDO"); :}
                         |
                         nt_change_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_hour:h nt_time_op_close nt_day:d TO nt_time:t2 nt_time_op_close nt_day:d2
@@ -77,7 +80,7 @@ nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive:s 
                         	Date start1=DateUtils.mergeTimes(d,h);
                         	Date start2=DateUtils.mergeTimes(d2,t2.getTime1());
                         	Date end2=DateUtils.mergeTimes(d2,t2.getTime2());
-                        	Actions.updateDate(s,start1,start2,end2);
+                        	actionMessage=new ActionMessage(eAction.UPDATE,s,start1,start2,end2);
                        	    System.out.println("CHIDO"); 
                         :}
                         |errorlex {:System.out.println("errorlex");:};

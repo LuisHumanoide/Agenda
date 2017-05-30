@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 /* pruebas
  *create date with Jalil at 8 long on tuesday
  *delete date with Doctor at 9 today
- *update date with Migue from 8 today to 8 to 9 on friday
+ *move date with Migue from 8 today to 8 to 9 on friday
  * 
  */
 /**

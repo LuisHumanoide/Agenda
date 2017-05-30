@@ -63,7 +63,7 @@ class CharNum {
  * <a href="http://www.jflex.de/">JFlex</a> 1.5.0-SNAPSHOT
  * from the specification file <tt>C:/Users/Humanoide/Documents/Projs2/agenda/Agenda/src/translator/Scanner.flex</tt>
  */
-class Yylex implements java_cup.runtime.Scanner {
+  class Yylex implements java_cup.runtime.Scanner {
 
   /** This character denotes the end of file */
   public static final int YYEOF = -1;
