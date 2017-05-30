@@ -44,6 +44,7 @@ public class DateUtils {
                 break;
             }
         }
+        //hago el desplazamiento, sumando hasta que el día coincida 
         Calendar calendar = Calendar.getInstance();
         for (int i = 0; i <= 7; i++) {
             if (calendar.get(Calendar.DAY_OF_WEEK) == nDay) {
