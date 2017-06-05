@@ -1,0 +1,43 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package agenda;
+
+import java.util.ArrayList;
+
+/**
+ *
+ * @author Humanoide
+ */
+public class Schedule {
+     //Container of the actual appointments registered. This is the one to be updated when new appointments are registered, moved, deleted, etc.
+    static ArrayList<Appointment> ScheduleList;
+    /**
+     * getter method
+     * @return 
+     */
+    public ArrayList<Appointment> getSchedule() {
+        return ScheduleList;
+    }
+    /**
+     * setter method
+     * @param Schedule 
+     */
+    public void setSchedule(ArrayList<Appointment> Schedule) {
+        this.ScheduleList = Schedule;
+    }
+    /**
+     * add an appointment to the schedule
+     * @param ap is the appointment
+     */
+    public static void add(Appointment ap){
+        //if the list is empty
+        if(ScheduleList==null){
+            ScheduleList=new ArrayList();
+        }
+        ScheduleList.add(ap);
+    }      
+    
+}

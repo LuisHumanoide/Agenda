@@ -45,6 +45,15 @@ class Appointment
     public Date EndDate;
     public float Priority;
     
+    Appointment(String in_szPlaceOrPeople, Date in_BeginDate, Date in_EndDate)
+    {
+        PlaceOrPeople = in_szPlaceOrPeople;
+        BeginDate = in_BeginDate;
+        EndDate = in_EndDate;
+        eCategory = eCategory.EPC_OTHER; //By default.
+        Priority = 1.0f; //By default
+    }
+    
     /**
      * toString Method override.
      * @return a special formatted representation of this object, in a more human form and language.
@@ -77,9 +86,6 @@ public class AgendaAgent extends Agent{
     //Used to retrieve the Weight or value for the utility function, given the preferences of the user.
     HashMap<ePriorityCategories, Float> UserCategoriesWeightMap = new HashMap<>();
     
-    //Container of the actual appointments registered. This is the one to be updated when new appointments are registered, moved, deleted, etc.
-    ArrayList<Appointment> Schedule;
-  
     /**
      *  InitializeCategoryWeights method.
      *  @description this method sets a default value to the weight of each category, according to "common sense".
@@ -193,9 +199,7 @@ public class AgendaAgent extends Agent{
      */
     protected void ProcessMessage(ACLMessage in_pACLMessage)
     {
-        //the action message is created
-        ActionMessage actionMessage;
-        //actionMessage=getActionMessage(in_pACLMessage.getContent());
+       
         System.out.println("Entered ProcessMessage method. with the ACL message: " + in_pACLMessage.toString());
         /*Switch used to decide which action must be taken BASED ON THE PERFORMATIVE, 
         but another switch will be used, depending on which of "Create/Delete/Move" is desired. */
@@ -206,6 +210,54 @@ public class AgendaAgent extends Agent{
                 /*INFORM will be used when the application (user) inputs a statement
                 in Natural English. In this case, it will be translated to something easier for the agent.*/
                 System.out.println("Entered INFORM case.");
+                //CRUCIAL: The PERFORMATIVE of the message MUST BE INFORM.
+                 //the action message is created
+                ActionMessage actionMessage;
+                actionMessage=getActionMessage(in_pACLMessage.getContent());
+                //Translate the actionMessage to a Appointment object. 
+                Appointment NewAppointment = new Appointment("NULL", actionMessage.start1, actionMessage.end1);//SOME DEFAULT VALUES SO IT STOPS WHINING.
+                switch(actionMessage.e_action)
+                {
+                    case CREATE:
+                        NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        break;
+                    case DELETE:
+                        //In the delete there's no need to do all this work. We just call a funtion to search the given Appointment and erase it
+                        System.out.println("WARNING: Check if the actionMessage for DELETE has end1, (it wil not be used, anyway), but rather safe than sorry.");
+                        NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        DeleteAppointment(NewAppointment);
+                    break;
+                    case UPDATE:
+                        //First, it will behave as DELETE, then, it will do the same as CREATE. So, be careful if your "update" removes not-so important
+                        //appointments from the agenda, it's because it didn't have enough Priority.
+                        //DELETE first!
+                        Appointment TempApp = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        DeleteAppointment(TempApp);
+                        //Now, CREATE!
+                        NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start2, actionMessage.end2);
+                        break;
+                }
+                
+                //First, we check in the user preference Agent if it can be added to the Agenda. 
+                //It it can be done without removing other dates, then it is done.
+                if(CheckForConflict(NewAppointment).isEmpty() )
+                {
+                    Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
+                }
+                else
+                {
+                    //Otherwise, the Common Sense Agent must receive it as a proposal.
+                    //****MAKE THE PROPOSAL!!!**************************************************************************************
+                    //??
+                }
+                
+                //////*************AQUÍ ES DONDE FALTA MÁS!
+                //The TryInsertAppointment will be called once the proposal has been accepted. (Probably).
+                TryInsertAppointment(NewAppointment);
+                
+                //Now that it has been decoded, we can just pass it to the Other agent.
+                ACLMessage tDateProposal = new ACLMessage(jade.lang.acl.ACLMessage.PROPOSE);
+                send(tDateProposal);
             }
             break;
             case  jade.lang.acl.ACLMessage.AGREE:
@@ -249,44 +301,58 @@ public class AgendaAgent extends Agent{
      */
     protected void PrintSchedule ()
     {
-        for(Appointment app : Schedule)
+        for(Appointment app : Schedule.ScheduleList)
         {
             System.out.println( app.toString() ); //Using the nice format of the "toString()" override, it is as simple as this.
         }
     }
     
-    
     /**
-     * CheckSchedule method is used to iterate the actual schedule to find possible conflicts between the new appointment
-     * and the ones already scheduled. If there is conflict, it checks the utilities (priorities) to resolve the conflict.
-     * @param in_DateToCheck is the new Appointment to try to insert on the schedule.
-     * @return true if in_DateToCheck has a greater Priority than all the other appointments in conflict with it (always if there's no conflict); false otherwise.
+     * Checks for conflicting appointments on the Agenda. 
+     * @param in_DateToCheck An appointment object, which we want to see if it's in conflict of dates with another one.
+     * @return An ArrayList of appointments, containing all the ones in conflict with in_DateToCheck. Empty if there's none. 
      */
-    protected boolean CheckSchedule (Appointment in_DateToCheck)
+    protected ArrayList<Appointment> CheckForConflict(Appointment in_DateToCheck)
     {
-        System.out.println("Entered CheckSchedule function, the appointment to check is from : " + in_DateToCheck.BeginDate.toString() + " to " + in_DateToCheck.EndDate.toString());
         ArrayList<Appointment> tempConflictingAppointments = new ArrayList<>();
-        float fTotalUtilityOfConflictingAppointments = 0.0f;
-        for( Appointment app: Schedule  )
+        for( Appointment app: Schedule.ScheduleList  )
         {
             if( !(in_DateToCheck.BeginDate.after(app.EndDate) || in_DateToCheck.EndDate.before(app.BeginDate) ) )
             {
                 //Else, this two appointments are now in conflict. It doesn't matter if this is contained or not
                 //or contains another one completely, it just matters they are conflicting.
                 tempConflictingAppointments.add(app); //Then, we add it to the list so we can weight them all together.
-                fTotalUtilityOfConflictingAppointments += app.Priority;//We add it at the same time, so we don't have to reiterate the list.
                 //Print the times so we can easily corroborate the result.
                 System.out.println("The new appointment is in conflict with the one from: " + app.BeginDate.toString() + " to " + app.EndDate.toString());
             }            
+        }
+        return tempConflictingAppointments;
+    }
+    
+    /**
+     * TryInsertAppointment method is used to iterate the actual schedule to find possible conflicts between the new appointment
+     * and the ones already scheduled. If there is conflict, it checks the utilities (priorities) to resolve the conflict.
+     * @param in_DateToCheck is the new Appointment to try to insert on the schedule.
+     * @return true if in_DateToCheck has a greater Priority than all the other appointments in conflict with it (always if there's no conflict); false otherwise.
+     */
+    protected boolean TryInsertAppointment (Appointment in_DateToCheck)
+    {
+        System.out.println("Entered CheckSchedule function, the appointment to check is from : " + in_DateToCheck.BeginDate.toString() + " to " + in_DateToCheck.EndDate.toString());
+        float fTotalUtilityOfConflictingAppointments = 0.0f;
+        ArrayList<Appointment> pConflictingAppointments = CheckForConflict(in_DateToCheck); //Call to the function to obtain the list of conflicting elements.
+        //Iterate the elements to get the total priority of the combined values.
+        for( Appointment app: pConflictingAppointments  )
+        {
+            fTotalUtilityOfConflictingAppointments += app.Priority;
         }
         
         //Compare the total utility of the old ones to the total of the new one.
         if( in_DateToCheck.Priority > fTotalUtilityOfConflictingAppointments)
         {
-            System.out.println("The newest appointment has a greater utility than the: " + tempConflictingAppointments.size() 
+            System.out.println("The newest appointment has a greater utility than the: " + pConflictingAppointments.size() 
                     + " previous appointments, so it has replaced them.");
             //Then, we have to remove from the actual schedule the conflicting ones and add the new one.
-            Schedule.removeAll(tempConflictingAppointments);//Use this function to remove all of them.
+            Schedule.ScheduleList.removeAll(pConflictingAppointments);//Use this function to remove all of them.
             Schedule.add(in_DateToCheck); //Then, add the new one.
             return true;// return true so it is not necessary to use an else statement below.
         }
@@ -296,6 +362,7 @@ public class AgendaAgent extends Agent{
 
         return false;
     }
+    
     
     
     /**
@@ -318,7 +385,25 @@ public class AgendaAgent extends Agent{
         return fTotalUtility;
     }
             
-    
+    /**
+     * DeleteAppoinment method. Removes an Appointment from Schedule (Agenda) whose BeginDate and PlaceOrPeople values are equal to the ones from in_AppointmentToDelete.
+     * @param in_AppointmentToDelete is an Appointment object with the BeginDate and PlaceOrPeople values to match from the schedule. That Appointment will be removed from it.
+     * @return true if there was a matching appointment. False otherwise.
+     */
+    protected boolean DeleteAppointment (Appointment in_AppointmentToDelete)
+    {
+        for( Appointment app: Schedule.ScheduleList  )
+        {
+            if(app.BeginDate == in_AppointmentToDelete.BeginDate && app.PlaceOrPeople == in_AppointmentToDelete.PlaceOrPeople)
+            {
+                //The, we have found the one to remove. So we just remove it.
+                Schedule.ScheduleList.remove(app);
+                return true; //We exit the loop and function.
+            }
+        }
+        
+        return false; //If this point is reached, then no matching Appointment was present on Schedule (Agenda).
+    }
     
     /**
      * takeDown() 
