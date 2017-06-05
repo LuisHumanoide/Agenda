@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Dictionary;
@@ -61,7 +62,10 @@ class Appointment
     @Override
     public String toString()
     {
-        return ("Date with " + PlaceOrPeople + " from: " + BeginDate.toString() + " to: " + EndDate.toString() );
+        //create date with Momos at 5 pm long today
+        //format the date
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
+        return ("Date with " + PlaceOrPeople + " from: " + sdf.format(BeginDate) + " to: " + sdf.format(EndDate) );
     }
 };
 
@@ -85,6 +89,8 @@ public class AgendaAgent extends Agent{
   
     //Used to retrieve the Weight or value for the utility function, given the preferences of the user.
     HashMap<ePriorityCategories, Float> UserCategoriesWeightMap = new HashMap<>();
+    
+    WindowSchedule w;
     
     /**
      *  InitializeCategoryWeights method.
@@ -142,6 +148,7 @@ public class AgendaAgent extends Agent{
 	} catch (IOException e) 
         {
             e.printStackTrace();
+           
 	} finally 
         {
             try {
@@ -162,6 +169,9 @@ public class AgendaAgent extends Agent{
     */
     protected void setup ()
     {
+        w=new WindowSchedule();
+        w.setVisible(true);
+        Schedule.ScheduleList=new ArrayList();
         //Prints the local name of this agent.
         System.out.println(getLocalName());
         
@@ -240,7 +250,7 @@ public class AgendaAgent extends Agent{
                 
                 //First, we check in the user preference Agent if it can be added to the Agenda. 
                 //It it can be done without removing other dates, then it is done.
-                if(CheckForConflict(NewAppointment).isEmpty() )
+                if(CheckForConflict(NewAppointment).isEmpty()  )
                 {
                     Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
                 }
@@ -254,10 +264,12 @@ public class AgendaAgent extends Agent{
                 //////*************AQUÍ ES DONDE FALTA MÁS!
                 //The TryInsertAppointment will be called once the proposal has been accepted. (Probably).
                 TryInsertAppointment(NewAppointment);
+                System.out.println(Schedule.ScheduleList.size());
                 
                 //Now that it has been decoded, we can just pass it to the Other agent.
                 ACLMessage tDateProposal = new ACLMessage(jade.lang.acl.ACLMessage.PROPOSE);
                 send(tDateProposal);
+                w.scheduleList=Schedule.ScheduleList;
             }
             break;
             case  jade.lang.acl.ACLMessage.AGREE:

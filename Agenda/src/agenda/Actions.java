@@ -5,6 +5,7 @@
  */
 package agenda;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -50,7 +51,8 @@ public class Actions {
      */
     public static boolean updateDate(String name, Date start1, Date start2, Date end2){
         //code
-        System.out.println(name+" , "+start1+" , "+start2+" , "+end2);
+        SimpleDateFormat sdf= new SimpleDateFormat("dd/M/yyyy");
+        System.out.println(name+" , "+sdf.format(start1)+" , "+sdf.format(start2)+" , "+end2);
         return true;
     }
     

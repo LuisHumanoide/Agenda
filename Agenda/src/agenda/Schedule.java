@@ -21,22 +21,12 @@ public class Schedule {
     public ArrayList<Appointment> getSchedule() {
         return ScheduleList;
     }
-    /**
-     * setter method
-     * @param Schedule 
-     */
-    public void setSchedule(ArrayList<Appointment> Schedule) {
-        this.ScheduleList = Schedule;
-    }
+
     /**
      * add an appointment to the schedule
      * @param ap is the appointment
      */
     public static void add(Appointment ap){
-        //if the list is empty
-        if(ScheduleList==null){
-            ScheduleList=new ArrayList();
-        }
         ScheduleList.add(ap);
     }      
     
