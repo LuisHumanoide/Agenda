@@ -13,15 +13,19 @@ import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import translator.DataFromParser;
 import translator.parser;
@@ -40,7 +44,7 @@ enum ePriorityCategories {
     EPC_OTHER
 };
 
-class Appointment {
+class Appointment implements Serializable {
 
     public String PlaceOrPeople;
     ePriorityCategories eCategory;
@@ -170,12 +174,13 @@ public class AgendaAgent extends Agent {
      * instantiated.
      */
     protected void setup() {
+        InitializeCategoryWeights();
         agents = null;
         if (this.getLocalName().equals("user")) {
             w = new WindowSchedule();
             w.setVisible(true);
         }
-  /*=============================================================================
+        /*=============================================================================
  |  this block is for identify the agents in the system
  *===========================================================================*/
         try {
@@ -195,53 +200,49 @@ public class AgendaAgent extends Agent {
                     + i + ": " + agentID.getName()
             );
         }
-   //<------------------------------------------------------- end the identification
-   
-   
-   
-    Schedule.ScheduleList  = new ArrayList();
-    //Prints the local name of this agent.
+        //<------------------------------------------------------- end the identification
 
-    System.out.println (getLocalName
+        Schedule.ScheduleList = new ArrayList();
+        //Prints the local name of this agent.
 
-    ());
+        System.out.println(getLocalName());
 
-    ReadPriorityFiles(
-    "CategoryDictionary.txt");
+        ReadPriorityFiles(
+                "CategoryDictionary.txt");
 
         Behaviour receiveBehaviour = new CyclicBehaviour() {
-        @Override
-        public void action() {
-            //NOTE: THIS PART WILL BE MODIFIED..***********
-            ACLMessage msg = receive();
-            if (msg != null) {
-                try {
-                    //process the message               
-                    ProcessMessage(msg);
-                } catch (Exception ex) {
-                    //ocurrió una excepción
-                    System.out.println(ex.toString());
+            @Override
+            public void action() {
+                //NOTE: THIS PART WILL BE MODIFIED..***********
+                ACLMessage msg = receive();
+                if (msg != null) {
+                    try {
+                        //process the message               
+                        ProcessMessage(msg);
+                    } catch (Exception ex) {
+                        //ocurrió una excepción
+                        System.out.println(ex.toString());
+                    }
+                } else {
+                    block();
                 }
-            } else {
-                block();
             }
-        }
-    };
+        };
 
-    //Add the behaviours for this agent to execute.
-    addBehaviour(receiveBehaviour);
-}
+        //Add the behaviours for this agent to execute.
+        addBehaviour(receiveBehaviour);
+    }
 
-/**
- * ProcessMessage
- *
- * @description Function called to translate from the Reduced English to
- * messages the agents can understand better.
- * @param in_pACLMessage is an ACLMessage object which must contain a
- * Performative and a message content, which will be translated so agents can
- * manipulate it.
- */
-protected void ProcessMessage(ACLMessage in_pACLMessage) {
+    /**
+     * ProcessMessage
+     *
+     * @description Function called to translate from the Reduced English to
+     * messages the agents can understand better.
+     * @param in_pACLMessage is an ACLMessage object which must contain a
+     * Performative and a message content, which will be translated so agents
+     * can manipulate it.
+     */
+    protected void ProcessMessage(ACLMessage in_pACLMessage) {
 
         System.out.println("Entered ProcessMessage method. with the ACL message: " + in_pACLMessage.toString());
         /*Switch used to decide which action must be taken BASED ON THE PERFORMATIVE, 
@@ -282,14 +283,17 @@ protected void ProcessMessage(ACLMessage in_pACLMessage) {
                 //It it can be done without removing other dates, then it is done.
                 if (CheckForConflict(NewAppointment).isEmpty()) {
                     Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
-                    ACLMessage reply = new ACLMessage( ACLMessage.AGREE );
-                    reply.setContent("que rollin con el pollin");
-                  //  reply.addReceiver(this.get);
-                    send(reply);
+
                 } else {
-                    //Otherwise, the Common Sense Agent must receive it as a proposal.
-                    //****MAKE THE PROPOSAL!!!**************************************************************************************
-                    //??
+                    ACLMessage reply = new ACLMessage(ACLMessage.PROPOSE);
+                    TwoAppointments twoAppointments=new TwoAppointments(CheckForConflict(NewAppointment),(NewAppointment));
+                    try {
+                        reply.setContentObject(twoAppointments);
+                    } catch (IOException ex) {
+                        Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    reply.addReceiver(getAgentByName("commonSense").getName());
+                    send(reply);
                 }
 
                 //////*************AQUÍ ES DONDE FALTA MÁS!
@@ -301,24 +305,47 @@ protected void ProcessMessage(ACLMessage in_pACLMessage) {
                 ACLMessage tDateProposal = new ACLMessage(jade.lang.acl.ACLMessage.PROPOSE);
                 send(tDateProposal);
                 w.scheduleList = Schedule.ScheduleList;
+
             }
             break;
             case jade.lang.acl.ACLMessage.AGREE: {
                 /*AGREE is used when the two agents have reached an agreement on when will
                 the DATE will be on the Schedule (AGENDA)*/
+                JOptionPane.showMessageDialog(null, "pues lo pongo");
                 System.out.println("Entered AGREE case.");
-                JOptionPane.showMessageDialog(null, in_pACLMessage.getContent());
             }
             break;
             case jade.lang.acl.ACLMessage.PROPOSE: {
                 /*PROPOSE identifies a message to which the agents must AGREE or REJECT_PROPOSAL.
                 It is in this case where the AGENDA is checked to see if the date will be created of discarded.*/
                 System.out.println("Entered PROPOSE case.");
+                try {
+                    TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
+                    JOptionPane.showMessageDialog(null, ta2.initials.get(0).toString());
+                    boolean prior=comparePriorities(ta2);
+                    ACLMessage reply;
+                    if(prior){
+                        reply = new ACLMessage(ACLMessage.AGREE);
+                        reply.setContent("yes");
+                        reply.addReceiver(getAgentByName("user").getName());
+                        send(reply);
+                    }
+                    else{
+                        reply = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
+                        reply.setContent("no");
+                        reply.addReceiver(getAgentByName("user").getName());
+                        send(reply);
+                    }
+                } catch (UnreadableException ex) {
+                    System.out.println(ex.toString());
+                    Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
             break;
             case jade.lang.acl.ACLMessage.REJECT_PROPOSAL: {
                 /*REJECT_PROPOSAL is received when the "Common sense" agent has rejected the proposal of the
                 "User profile" agent. It may or may not be necessary. */
+                JOptionPane.showMessageDialog(null, "no me gustó");
                 System.out.println("Entered REJECT_PROPOSAL case.");
             }
             break;
@@ -475,11 +502,39 @@ protected void ProcessMessage(ACLMessage in_pACLMessage) {
         }
         return am;
     }
-    
-    
-    public AMSAgentDescription getAgentByName(String name){
-        for(AMSAgentDescription agent: agents){
-            if(name.equals(agent.getName()))
+
+    /**
+     * return the agent by the name
+     *
+     * @param name , name of the agent
+     * @return the agent such as AMSAgentDescription
+     */
+    public AMSAgentDescription getAgentByName(String name) {
+        for (AMSAgentDescription agent : agents) {
+            if (name.equals(agent.getName().getLocalName())) {
+                return agent;
+            }
         }
+        return null;
+    }
+    
+    /**
+     * this method compare priorities between the appointments 
+     * @param tAppoints is an object twoAppoints
+     * @return is is true
+     */
+    public boolean comparePriorities(TwoAppointments tAppoints){
+        float value1=0;
+        float value2;
+        //find the sum of the values
+        for(Appointment ap: tAppoints.getInitials()){
+            value1=value1+CalculateUtility(ap);
+        }
+        //calculate utiliti of the new appointment
+        value2=CalculateUtility(tAppoints.getNewAppoint());
+        //if value2 is gratter,.., this return true
+        JOptionPane.showMessageDialog(null, value1+"   "+value2);
+        return value2>value1;
+        
     }
 }

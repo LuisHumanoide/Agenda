@@ -35,7 +35,6 @@ public class WindowSchedule extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e) {
                 try {
                     jList1.setModel(createListModel(scheduleList));
-                    System.out.println(scheduleList.size());
                 } catch (NullPointerException ex) {
 
                 }

@@ -65,14 +65,14 @@ nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive:s 
                         {: System.out.println("CHIDO"); 
                         	Date start=DateUtils.mergeTimes(d,t.getTime1());
                         	Date end=DateUtils.mergeTimes(d,t.getTime2());
-                        	actionMessage=new ActionMessage(eAction.CREATE,s,start,end);
+                        	actionMessage=new ActionMessage(eAction.CREATE,s.toLowerCase(),start,end);
 
                         :}
                         |
                         nt_delete_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_hour:h nt_time_op_close nt_day:d
                         {: 
                         	Date start=DateUtils.mergeTimes(d,h);
-                        	actionMessage=new ActionMessage(eAction.DELETE,s,start);
+                        	actionMessage=new ActionMessage(eAction.DELETE,s.toLowerCase(),start);
                         	System.out.println("CHIDO"); :}
                         |
                         nt_change_action nt_type nt_relation_op nt_sustantive:s nt_time_op nt_hour:h nt_time_op_close nt_day:d TO nt_time:t2 nt_time_op_close nt_day:d2
@@ -80,7 +80,7 @@ nt_sentence         ::= nt_create_action nt_type nt_relation_op nt_sustantive:s 
                         	Date start1=DateUtils.mergeTimes(d,h);
                         	Date start2=DateUtils.mergeTimes(d2,t2.getTime1());
                         	Date end2=DateUtils.mergeTimes(d2,t2.getTime2());
-                        	actionMessage=new ActionMessage(eAction.UPDATE,s,start1,start2,end2);
+                        	actionMessage=new ActionMessage(eAction.UPDATE,s.toLowerCase(),start1,start2,end2);
                        	    System.out.println("CHIDO"); 
                         :}
                         |errorlex {:System.out.println("errorlex");:};
