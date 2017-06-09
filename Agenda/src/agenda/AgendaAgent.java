@@ -21,6 +21,9 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import static java.util.Collections.list;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -28,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import translator.DataFromParser;
+import translator.DateUtils;
 import translator.parser;
 
 /**
@@ -44,7 +48,7 @@ enum ePriorityCategories {
     EPC_OTHER
 };
 
-class Appointment implements Serializable {
+class Appointment implements Serializable, Comparable<Appointment> {
 
     public String PlaceOrPeople;
     ePriorityCategories eCategory;
@@ -60,6 +64,14 @@ class Appointment implements Serializable {
         Priority = 1.0f; //By default
     }
 
+    public ePriorityCategories geteCategory() {
+        return eCategory;
+    }
+
+    public void seteCategory(ePriorityCategories eCategory) {
+        this.eCategory = eCategory;
+    }
+
     /**
      * toString Method override.
      *
@@ -70,9 +82,20 @@ class Appointment implements Serializable {
     public String toString() {
         //create date with Momos at 5 pm long today
         //format the date
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        return ("Date with " + PlaceOrPeople + " from: " + sdf.format(BeginDate) + " to: " + sdf.format(EndDate));
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yy hh:mm");
+        return ("Date with " + PlaceOrPeople.toUpperCase() + " from: " + sdf.format(BeginDate) + " to: " + sdf.format(EndDate));
     }
+
+    /*
+    @Override
+    public int compare(Appointment o1, Appointment o2) {
+        return o1.BeginDate.compareTo(o2.BeginDate);
+    }*/
+    @Override
+    public int compareTo(Appointment o) {
+        return o.BeginDate.compareTo(this.BeginDate);
+    }
+
 };
 
 /**
@@ -93,9 +116,6 @@ public class AgendaAgent extends Agent {
 
     //Used to retrieve the Weight or value for the utility function, given the preferences of the user.
     HashMap<ePriorityCategories, Float> UserCategoriesWeightMap = new HashMap<>();
-
-    //window for show the commitments
-    WindowSchedule w;
 
     //list of agents in the system
     AMSAgentDescription[] agents;
@@ -176,10 +196,7 @@ public class AgendaAgent extends Agent {
     protected void setup() {
         InitializeCategoryWeights();
         agents = null;
-        if (this.getLocalName().equals("user")) {
-            w = new WindowSchedule();
-            w.setVisible(true);
-        }
+
         /*=============================================================================
  |  this block is for identify the agents in the system
  *===========================================================================*/
@@ -261,11 +278,15 @@ public class AgendaAgent extends Agent {
                 switch (actionMessage.e_action) {
                     case CREATE:
                         NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        if (PrioritiesDictionary.get(actionMessage.s_object) != null) {
+                            NewAppointment.seteCategory(PrioritiesDictionary.get(actionMessage.s_object));
+                        }
+                        addAppointment(NewAppointment);
                         break;
                     case DELETE:
                         //In the delete there's no need to do all this work. We just call a funtion to search the given Appointment and erase it
                         System.out.println("WARNING: Check if the actionMessage for DELETE has end1, (it wil not be used, anyway), but rather safe than sorry.");
-                        NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start1, null);
                         DeleteAppointment(NewAppointment);
                         break;
                     case UPDATE:
@@ -273,38 +294,27 @@ public class AgendaAgent extends Agent {
                         //appointments from the agenda, it's because it didn't have enough Priority.
                         //DELETE first!
                         Appointment TempApp = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        Appointment TempApp2 = findAppointment(TempApp);
                         DeleteAppointment(TempApp);
                         //Now, CREATE!
                         NewAppointment = new Appointment(actionMessage.s_object, actionMessage.start2, actionMessage.end2);
+                        if (PrioritiesDictionary.get(actionMessage.s_object) != null) {
+                            NewAppointment.seteCategory(PrioritiesDictionary.get(actionMessage.s_object));
+                        }
+                        try {
+                            if (TempApp2 != null) {
+                                updateAppointment(NewAppointment, TempApp2);
+                            }
+                        } catch (NullPointerException ex) {
+                            JOptionPane.showMessageDialog(null, "Exception");
+                        }
                         break;
                 }
 
-                //First, we check in the user preference Agent if it can be added to the Agenda. 
-                //It it can be done without removing other dates, then it is done.
-                if (CheckForConflict(NewAppointment).isEmpty()) {
-                    Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
-
-                } else {
-                    ACLMessage reply = new ACLMessage(ACLMessage.PROPOSE);
-                    TwoAppointments twoAppointments=new TwoAppointments(CheckForConflict(NewAppointment),(NewAppointment));
-                    try {
-                        reply.setContentObject(twoAppointments);
-                    } catch (IOException ex) {
-                        Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    reply.addReceiver(getAgentByName("commonSense").getName());
-                    send(reply);
-                }
-
-                //////*************AQUÍ ES DONDE FALTA MÁS!
-                //The TryInsertAppointment will be called once the proposal has been accepted. (Probably).
-                TryInsertAppointment(NewAppointment);
-                System.out.println(Schedule.ScheduleList.size());
-
                 //Now that it has been decoded, we can just pass it to the Other agent.
-                ACLMessage tDateProposal = new ACLMessage(jade.lang.acl.ACLMessage.PROPOSE);
-                send(tDateProposal);
-                w.scheduleList = Schedule.ScheduleList;
+                // ACLMessage tDateProposal = new ACLMessage(jade.lang.acl.ACLMessage.PROPOSE);
+                //send(tDateProposal);
+                updateList();
 
             }
             break;
@@ -312,6 +322,16 @@ public class AgendaAgent extends Agent {
                 /*AGREE is used when the two agents have reached an agreement on when will
                 the DATE will be on the Schedule (AGENDA)*/
                 JOptionPane.showMessageDialog(null, "pues lo pongo");
+                try {
+                    TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
+                    for (Appointment ap : ta2.initials) {
+                        DeleteAppointment(ap);
+                    }
+                    addAppointment(ta2.getNewAppoint());
+                    updateList();
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 System.out.println("Entered AGREE case.");
             }
             break;
@@ -322,17 +342,26 @@ public class AgendaAgent extends Agent {
                 try {
                     TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
                     JOptionPane.showMessageDialog(null, ta2.initials.get(0).toString());
-                    boolean prior=comparePriorities(ta2);
+                    boolean prior = comparePriorities(ta2);
                     ACLMessage reply;
-                    if(prior){
+                    if (prior) {
                         reply = new ACLMessage(ACLMessage.AGREE);
-                        reply.setContent("yes");
+                        try {
+                            reply.setContentObject(ta2);
+                        } catch (IOException ex) {
+                            Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                         reply.addReceiver(getAgentByName("user").getName());
                         send(reply);
-                    }
-                    else{
+                    } else {
                         reply = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
-                        reply.setContent("no");
+                        if (ta2.oldAppoint != null) {
+                            try {
+                                reply.setContentObject(ta2);
+                            } catch (IOException ex) {
+                                Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
                         reply.addReceiver(getAgentByName("user").getName());
                         send(reply);
                     }
@@ -345,8 +374,18 @@ public class AgendaAgent extends Agent {
             case jade.lang.acl.ACLMessage.REJECT_PROPOSAL: {
                 /*REJECT_PROPOSAL is received when the "Common sense" agent has rejected the proposal of the
                 "User profile" agent. It may or may not be necessary. */
-                JOptionPane.showMessageDialog(null, "no me gustó");
-                System.out.println("Entered REJECT_PROPOSAL case.");
+                JOptionPane.showMessageDialog(null, "no la pongo");
+                try {
+                    TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
+                    if (ta2.oldAppoint != null) {
+                        JOptionPane.showMessageDialog(null, "deshacer eliminar");
+                        Schedule.add(ta2.oldAppoint);
+                    }
+                } catch (Exception ex) {
+                    //Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                updateList();
+                //System.out.println("Entered REJECT_PROPOSAL case.");
             }
             break;
             case jade.lang.acl.ACLMessage.UNKNOWN: {
@@ -363,6 +402,61 @@ public class AgendaAgent extends Agent {
     }
 
     /**
+     *
+     * @param NewAppointment
+     */
+    public void addAppointment(Appointment NewAppointment) {
+        //First, we check in the user preference Agent if it can be added to the Agenda. 
+        //It it can be done without removing other dates, then it is done.
+        if (CheckForConflict(NewAppointment).isEmpty()) {
+            Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
+
+        } else {
+            ACLMessage reply = new ACLMessage(ACLMessage.PROPOSE);
+            TwoAppointments twoAppointments = new TwoAppointments(CheckForConflict(NewAppointment), (NewAppointment));
+            try {
+                reply.setContentObject(twoAppointments);
+            } catch (IOException ex) {
+                Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            reply.addReceiver(getAgentByName("commonSense").getName());
+            send(reply);
+        }
+
+        //////*************AQUÍ ES DONDE FALTA MÁS!
+        //The TryInsertAppointment will be called once the proposal has been accepted. (Probably).
+        TryInsertAppointment(NewAppointment);
+    }
+
+    /**
+     * update the appointment
+     *
+     * @param NewAppointment
+     */
+    public void updateAppointment(Appointment NewAppointment, Appointment OldAppointment) {
+        //First, we check in the user preference Agent if it can be added to the Agenda. 
+        //It it can be done without removing other dates, then it is done.
+        if (CheckForConflict(NewAppointment).isEmpty()) {
+            Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
+
+        } else {
+            ACLMessage reply = new ACLMessage(ACLMessage.PROPOSE);
+            TwoAppointments twoAppointments = new TwoAppointments(CheckForConflict(NewAppointment), (NewAppointment), OldAppointment);
+            try {
+                reply.setContentObject(twoAppointments);
+            } catch (IOException ex) {
+                Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            reply.addReceiver(getAgentByName("commonSense").getName());
+            send(reply);
+        }
+
+        //////*************AQUÍ ES DONDE FALTA MÁS!
+        //The TryInsertAppointment will be called once the proposal has been accepted. (Probably).
+        TryInsertAppointment(NewAppointment);
+    }
+
+    /**
      * PrintSchedule prints the actual Appointments stored in Schedule
      * arrayList, in a nicely formatted manner.
      */
@@ -370,6 +464,17 @@ public class AgendaAgent extends Agent {
         for (Appointment app : Schedule.ScheduleList) {
             System.out.println(app.toString()); //Using the nice format of the "toString()" override, it is as simple as this.
         }
+    }
+
+    /**
+     * send a message to the window agent for update the list
+     */
+    public void updateList() {
+        Collections.sort(Schedule.ScheduleList);
+        /*send the message for update the list*/
+        ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
+        reply.addReceiver(getAgentByName("window").getName());
+        send(reply);
     }
 
     /**
@@ -444,6 +549,7 @@ public class AgendaAgent extends Agent {
      */
     protected float CalculateUtility(Appointment in_AppointmentToCheck) {
         //********************CHANGE THE VALUE OF LENGTH
+        System.out.println(in_AppointmentToCheck.eCategory);
         float fLength = 1.0f; // in_AppointmentToCheck.EndDate - in_AppointmentToCheck.BeginDate ;
         float fUserPriority = UserCategoriesWeightMap.get(in_AppointmentToCheck.eCategory);//Check the beliefs of the "User profile" agent, to see the priority values.
         float fGeneralPriority = CategoriesWeightMap.get(in_AppointmentToCheck.eCategory); //Check the beliefs of the "Common sense" agent, to check priority values.
@@ -467,7 +573,7 @@ public class AgendaAgent extends Agent {
      */
     protected boolean DeleteAppointment(Appointment in_AppointmentToDelete) {
         for (Appointment app : Schedule.ScheduleList) {
-            if (app.BeginDate == in_AppointmentToDelete.BeginDate && app.PlaceOrPeople == in_AppointmentToDelete.PlaceOrPeople) {
+            if (DateUtils.equalsDates(app.BeginDate, in_AppointmentToDelete.BeginDate) && app.PlaceOrPeople.equals(in_AppointmentToDelete.PlaceOrPeople)) {
                 //The, we have found the one to remove. So we just remove it.
                 Schedule.ScheduleList.remove(app);
                 return true; //We exit the loop and function.
@@ -475,6 +581,19 @@ public class AgendaAgent extends Agent {
         }
 
         return false; //If this point is reached, then no matching Appointment was present on Schedule (Agenda).
+    }
+
+    protected Appointment findAppointment(Appointment in_AppointmentToDelete) {
+        Appointment appointment = null;
+        for (Appointment app : Schedule.ScheduleList) {
+            if (DateUtils.equalsDates(app.BeginDate, in_AppointmentToDelete.BeginDate) && app.PlaceOrPeople.equals(in_AppointmentToDelete.PlaceOrPeople)) {
+                //The, we have found the one to remove. So we just remove it.
+                appointment = app;
+                break;
+            }
+        }
+
+        return appointment;
     }
 
     /**
@@ -517,24 +636,24 @@ public class AgendaAgent extends Agent {
         }
         return null;
     }
-    
+
     /**
-     * this method compare priorities between the appointments 
+     * this method compare priorities between the appointments
+     *
      * @param tAppoints is an object twoAppoints
      * @return is is true
      */
-    public boolean comparePriorities(TwoAppointments tAppoints){
-        float value1=0;
+    public boolean comparePriorities(TwoAppointments tAppoints) {
+        float value1 = 0;
         float value2;
         //find the sum of the values
-        for(Appointment ap: tAppoints.getInitials()){
-            value1=value1+CalculateUtility(ap);
+        for (Appointment ap : tAppoints.getInitials()) {
+            value1 = value1 + CalculateUtility(ap);
         }
         //calculate utiliti of the new appointment
-        value2=CalculateUtility(tAppoints.getNewAppoint());
+        value2 = CalculateUtility(tAppoints.getNewAppoint());
         //if value2 is gratter,.., this return true
-        JOptionPane.showMessageDialog(null, value1+"   "+value2);
-        return value2>value1;
-        
+        return value2 > value1;
+
     }
 }

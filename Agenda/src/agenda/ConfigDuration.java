@@ -10,7 +10,7 @@ package agenda;
  * @author Humanoide
  */
 public class ConfigDuration {
-    public final static int LONG_DURATION = 180;
-    public final static int MEDIUM_DURATION = 60;
-    public final static int SHORT_DURATION = 30;
+    public final static int LONG_DURATION = 179;
+    public final static int MEDIUM_DURATION = 59;
+    public final static int SHORT_DURATION = 29;
 }

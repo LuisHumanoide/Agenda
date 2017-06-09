@@ -16,6 +16,14 @@ public class TwoAppointments implements Serializable{
     ArrayList<Appointment> initials;
     Appointment newAppoint;
 
+    public TwoAppointments(ArrayList<Appointment> initials, Appointment newAppoint, Appointment oldAppoint) {
+        this.initials = initials;
+        this.newAppoint = newAppoint;
+        this.oldAppoint = oldAppoint;
+    }
+    //if we want to update
+    Appointment oldAppoint;
+
     public TwoAppointments(ArrayList<Appointment> initials, Appointment newApp) {
         this.initials = initials;
         this.newAppoint = newApp;

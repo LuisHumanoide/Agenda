@@ -176,5 +176,5 @@ nt_article          ::= THE {:RESULT="the";:};
 nt_possesive        ::= MY {:RESULT="my";:}| YOUR {:RESULT="your";:}| ITS {:RESULT="its";:}| HIS{:RESULT="his";:} | HER {:RESULT="her";:}| OUR {:RESULT="our";:}| THEIR{:RESULT="their";:};
 
 nt_length           ::= SHORT {:RESULT=ConfigDuration.SHORT_DURATION;:}| LONG {:RESULT=ConfigDuration.LONG_DURATION;:}| 
-						MEDIUM {:RESULT=ConfigDuration.MEDIUM_DURATION;:} |/*si no pone nada aparece este error:*/{:RESULT=0; System.out.println("duración?");CUP$parser$parser.report_fatal_error(""+RESULT, this);:};
+						MEDIUM {:RESULT=ConfigDuration.MEDIUM_DURATION;:} |{:RESULT=ConfigDuration.MEDIUM_DURATION;:};
 

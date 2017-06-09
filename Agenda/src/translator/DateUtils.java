@@ -162,11 +162,36 @@ public class DateUtils {
         Calendar calendar2=Calendar.getInstance();
         calendar.setTime(date);
         calendar2.setTime(hour);
-        calendar.set(Calendar.HOUR, calendar2.get(Calendar.HOUR));
+        calendar.set(Calendar.HOUR_OF_DAY, calendar2.get(Calendar.HOUR_OF_DAY));
         calendar.set(Calendar.MINUTE, calendar2.get(Calendar.MINUTE));
-        calendar.set(Calendar.SECOND, calendar2.get(Calendar.SECOND));
+        calendar.set(Calendar.SECOND, 0);
         calendar.add(Calendar.DAY_OF_MONTH, calendar2.get(Calendar.DAY_OF_YEAR)-1);
         return calendar.getTime();
+    }
+    /**
+     * compare two dates and return true if are equals
+     * @param d1
+     * @param d2
+     * @return 
+     */
+    public static boolean equalsDates(Date d1,Date d2){
+        Calendar calendar=Calendar.getInstance();
+        Calendar calendar2=Calendar.getInstance();
+        calendar.setTime(d1);
+        calendar2.setTime(d2);
+        return (calendar.get(Calendar.HOUR_OF_DAY)==calendar2.get(Calendar.HOUR_OF_DAY))&&(calendar.get(Calendar.MINUTE)==calendar2.get(Calendar.MINUTE))&&
+                (calendar.get(Calendar.DAY_OF_YEAR)==calendar2.get(Calendar.DAY_OF_YEAR))&&(calendar.get(Calendar.YEAR)==calendar2.get(Calendar.YEAR));
+    }
+    
+    /**
+     * return the day of the week
+     * @param d1
+     * @return 
+     */
+    public static int dayOfWeek(Date d1){
+        Calendar calendar=Calendar.getInstance();
+        calendar.setTime(d1);
+        return calendar.get(Calendar.DAY_OF_WEEK);
     }
     
 

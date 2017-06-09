@@ -11,9 +11,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 /* pruebas
  *create date with Jalil at 8 long on tuesday
+delete date with Jalil at 8 on tuesday
  *delete date with Doctor at 9 today
  *move date with Migue from 8 today to 8 to 9 on friday
  * 
+
+create date with Jalil at 1 on tuesday
+delete date with Jalil at 1 on tuesday
+create date with Doctor at 12 long on tuesday
+change date with Jalil from 1 on tuesday to 12 long on tuesday
  */
 /**
  *
@@ -89,6 +95,7 @@ public class testFrame extends javax.swing.JFrame {
          p = new parser(new Yylex(new BufferedReader(new StringReader(text))));
         try {
             p.parse();
+            System.out.println(p.action_obj.actionMessage.toString());
         } catch (Exception ex) {
             System.out.println("error"+ex.toString());
            // Logger.getLogger(testFrame.class.getName()).log(Level.SEVERE, null, ex);
