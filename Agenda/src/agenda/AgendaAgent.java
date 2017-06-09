@@ -55,7 +55,12 @@ class Appointment implements Serializable, Comparable<Appointment> {
     public Date BeginDate;
     public Date EndDate;
     public float Priority;
-
+    /**
+     * constructor of the appointment
+     * @param in_szPlaceOrPeople
+     * @param in_BeginDate
+     * @param in_EndDate 
+     */
     Appointment(String in_szPlaceOrPeople, Date in_BeginDate, Date in_EndDate) {
         PlaceOrPeople = in_szPlaceOrPeople;
         BeginDate = in_BeginDate;
@@ -197,7 +202,7 @@ public class AgendaAgent extends Agent {
         InitializeCategoryWeights();
         agents = null;
 
-        /*=============================================================================
+ /*=============================================================================
  |  this block is for identify the agents in the system
  *===========================================================================*/
         try {
@@ -226,7 +231,9 @@ public class AgendaAgent extends Agent {
 
         ReadPriorityFiles(
                 "CategoryDictionary.txt");
-
+/*=============================================================================
+ |  behavior of the agent
+ *===========================================================================*/
         Behaviour receiveBehaviour = new CyclicBehaviour() {
             @Override
             public void action() {
@@ -294,6 +301,7 @@ public class AgendaAgent extends Agent {
                         //appointments from the agenda, it's because it didn't have enough Priority.
                         //DELETE first!
                         Appointment TempApp = new Appointment(actionMessage.s_object, actionMessage.start1, actionMessage.end1);
+                        /*we need a temporal appointment to search*/
                         Appointment TempApp2 = findAppointment(TempApp);
                         DeleteAppointment(TempApp);
                         //Now, CREATE!
@@ -341,10 +349,10 @@ public class AgendaAgent extends Agent {
                 System.out.println("Entered PROPOSE case.");
                 try {
                     TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
-                    JOptionPane.showMessageDialog(null, ta2.initials.get(0).toString());
                     boolean prior = comparePriorities(ta2);
                     ACLMessage reply;
                     if (prior) {
+                        /*the new message will be inserted*/
                         reply = new ACLMessage(ACLMessage.AGREE);
                         try {
                             reply.setContentObject(ta2);
@@ -354,8 +362,10 @@ public class AgendaAgent extends Agent {
                         reply.addReceiver(getAgentByName("user").getName());
                         send(reply);
                     } else {
+                        /*the agent reject the proposal by the user agent*/
                         reply = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
                         if (ta2.oldAppoint != null) {
+                            /*if is the case to update an appointment*/
                             try {
                                 reply.setContentObject(ta2);
                             } catch (IOException ex) {
@@ -376,16 +386,15 @@ public class AgendaAgent extends Agent {
                 "User profile" agent. It may or may not be necessary. */
                 JOptionPane.showMessageDialog(null, "no la pongo");
                 try {
+                    /*If the agent reject to insert an appointment to update, the initial appointment will be restored*/
                     TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
                     if (ta2.oldAppoint != null) {
-                        JOptionPane.showMessageDialog(null, "deshacer eliminar");
                         Schedule.add(ta2.oldAppoint);
                     }
                 } catch (Exception ex) {
                     //Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 updateList();
-                //System.out.println("Entered REJECT_PROPOSAL case.");
             }
             break;
             case jade.lang.acl.ACLMessage.UNKNOWN: {
@@ -401,7 +410,7 @@ public class AgendaAgent extends Agent {
         System.out.println("Exit the ProcessMessage method. ");
     }
 
-    /**
+    /**add appointment to the schedule
      *
      * @param NewAppointment
      */
@@ -412,6 +421,7 @@ public class AgendaAgent extends Agent {
             Schedule.add(NewAppointment); //Add it directly. No need for comparisons.
 
         } else {
+            /*send a message to the commonSense agent that will decid if the appointment will be insert*/
             ACLMessage reply = new ACLMessage(ACLMessage.PROPOSE);
             TwoAppointments twoAppointments = new TwoAppointments(CheckForConflict(NewAppointment), (NewAppointment));
             try {
@@ -429,7 +439,7 @@ public class AgendaAgent extends Agent {
     }
 
     /**
-     * update the appointment
+     * update the appointment, if the appointment is not update the oldAppointment will be insert again
      *
      * @param NewAppointment
      */
@@ -582,11 +592,15 @@ public class AgendaAgent extends Agent {
 
         return false; //If this point is reached, then no matching Appointment was present on Schedule (Agenda).
     }
-
-    protected Appointment findAppointment(Appointment in_AppointmentToDelete) {
+    /**
+     * find an appointment that match with the appointment to update
+     * @param in_AppointmentToDelete is the Appointment to search
+     * @return 
+     */
+    protected Appointment findAppointment(Appointment in_Appointment) {
         Appointment appointment = null;
         for (Appointment app : Schedule.ScheduleList) {
-            if (DateUtils.equalsDates(app.BeginDate, in_AppointmentToDelete.BeginDate) && app.PlaceOrPeople.equals(in_AppointmentToDelete.PlaceOrPeople)) {
+            if (DateUtils.equalsDates(app.BeginDate, in_Appointment.BeginDate) && app.PlaceOrPeople.equals(in_Appointment.PlaceOrPeople)) {
                 //The, we have found the one to remove. So we just remove it.
                 appointment = app;
                 break;

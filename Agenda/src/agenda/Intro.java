@@ -79,9 +79,10 @@ public class Intro extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
+     * this is for customize the JList
+     *
      * @param args the command line arguments
      */
-
     private static DefaultListModel<String> createListModel(ArrayList<Appointment> myListModel) {
         DefaultListModel<String> l = new DefaultListModel<>();
 
@@ -93,8 +94,13 @@ public class Intro extends javax.swing.JFrame {
         return l;
 
     }
-    
-    public void updateList(ArrayList<Appointment> scheduleList){
+
+    /**
+     * update the jList
+     *
+     * @param scheduleList is the list of appointments
+     */
+    public void updateList(ArrayList<Appointment> scheduleList) {
         jList1.setModel(createListModel(scheduleList));
         jList1.setCellRenderer(new MyListCellThing(scheduleList));
     }
@@ -107,12 +113,13 @@ public class Intro extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 }
 
+class MyListCellThing extends JLabel implements ListCellRenderer {
 
-    class MyListCellThing extends JLabel implements ListCellRenderer {
     ArrayList<Appointment> scheduleList;
+
     public MyListCellThing(ArrayList<Appointment> scheduleList) {
         setOpaque(true);
-        this.scheduleList=scheduleList;
+        this.scheduleList = scheduleList;
     }
 
     @Override
@@ -121,21 +128,25 @@ public class Intro extends javax.swing.JFrame {
         setFont(new Font("Dialog", Font.PLAIN, 18));
 
         // based on the index you set the color.  This produces the every other effect.
-        setBackground(colorOfDay(DateUtils.dayOfWeek(scheduleList.get(scheduleList.size()-index-1).BeginDate)));
+        setBackground(colorOfDay(DateUtils.dayOfWeek(scheduleList.get(scheduleList.size() - index - 1).BeginDate)));
 
         return this;
     }
-    
+    /**
+     * return the color by the day of week of the appointment
+     * @param day , day of the week
+     * @return the color that will displayed in the list
+     */
     public static Color colorOfDay(int day) {
-        Color [] cArray=new Color[8];
-        cArray[0]=new Color(255, 255, 204);
-        cArray[1]=new Color(242, 255, 204);
-        cArray[2]=new Color(217, 255, 204);
-        cArray[3]=new Color(204, 255, 255);
-        cArray[4]=new Color(204, 204, 255);
-        cArray[5]=new Color(255, 204, 242);
-        cArray[6]=new Color(255, 204, 204);
-        cArray[7]=new Color(204, 255, 102);
+        Color[] cArray = new Color[8];
+        cArray[0] = new Color(255, 255, 204);
+        cArray[1] = new Color(242, 255, 204);
+        cArray[2] = new Color(217, 255, 204);
+        cArray[3] = new Color(204, 255, 255);
+        cArray[4] = new Color(204, 204, 255);
+        cArray[5] = new Color(255, 204, 242);
+        cArray[6] = new Color(255, 204, 204);
+        cArray[7] = new Color(204, 255, 102);
         return cArray[day];
     }
 }

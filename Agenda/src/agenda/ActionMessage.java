@@ -8,7 +8,7 @@ package agenda;
 import java.util.Date;
 
 /**
- *
+ *this class represent the action done in the parser
  * @author Humanoide
  */
 

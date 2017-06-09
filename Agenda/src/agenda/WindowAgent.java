@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
- *
+ * the agent manage the window of the application
  * @author Humanoide
  */
 public class WindowAgent extends Agent implements MouseListener{
@@ -57,6 +57,7 @@ public class WindowAgent extends Agent implements MouseListener{
         //<------------------------------------------------------- end the identification
         //new window interface
         in=new Intro();
+        /*add a mouseListener for listen when in the window i do a click
         in.execute.addMouseListener(this);
         in.setVisible(true);
         
@@ -88,7 +89,10 @@ public class WindowAgent extends Agent implements MouseListener{
         
     }
     
-    
+    /**
+     * method for processing the message
+     * @param in_pACLMessage 
+     */
      protected void ProcessMessage(ACLMessage in_pACLMessage) {
 
         System.out.println("Entered ProcessMessage method. with the ACL message: " + in_pACLMessage.toString());
@@ -96,6 +100,7 @@ public class WindowAgent extends Agent implements MouseListener{
         but another switch will be used, depending on which of "Create/Delete/Move" is desired. */
         switch (in_pACLMessage.getPerformative()) {
             case jade.lang.acl.ACLMessage.INFORM: {
+                /*receive the signal for update the list*/
                    in.updateList(Schedule.ScheduleList);
 
             }
