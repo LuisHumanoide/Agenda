@@ -335,6 +335,16 @@ public class AgendaAgent extends Agent {
                     for (Appointment ap : ta2.initials) {
                         DeleteAppointment(ap);
                     }
+                    /*ask for change the dates with low priorities*/
+                    ACLMessage changeAsk=new ACLMessage(ACLMessage.INFORM);
+                    try {
+                        changeAsk.setContentObject(ta2);
+                    } catch (IOException ex) {
+                        Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    changeAsk.addReceiver(getAgentByName("reAgend").getName());
+                    send(changeAsk);
+                    /*the dates were changed*/
                     addAppointment(ta2.getNewAppoint());
                     updateList();
                 } catch (UnreadableException ex) {
@@ -363,16 +373,26 @@ public class AgendaAgent extends Agent {
                         send(reply);
                     } else {
                         /*the agent reject the proposal by the user agent*/
-                        reply = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
+                        
                         if (ta2.oldAppoint != null) {
                             /*if is the case to update an appointment*/
+                            reply = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
                             try {
                                 reply.setContentObject(ta2);
+                                reply.addReceiver(getAgentByName("user").getName());
+                            } catch (IOException ex) {
+                                Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }else{
+                            ta2.oldAppoint=ta2.newAppoint;
+                            reply = new ACLMessage(ACLMessage.AGREE);
+                            try {
+                                reply.setContentObject(ta2);
+                                reply.addReceiver(getAgentByName("reAgend").getName());
                             } catch (IOException ex) {
                                 Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }
-                        reply.addReceiver(getAgentByName("user").getName());
                         send(reply);
                     }
                 } catch (UnreadableException ex) {
