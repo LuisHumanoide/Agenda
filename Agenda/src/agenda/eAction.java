@@ -6,7 +6,7 @@
 package agenda;
 
 /**
- *
+ * actions of the ActionMessage
  * @author Humanoide
  */
 public enum eAction {

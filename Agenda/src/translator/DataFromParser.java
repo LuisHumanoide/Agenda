@@ -25,6 +25,7 @@ public class DataFromParser {
          p = new parser(new Yylex(new BufferedReader(new StringReader(string))));
         try {
             p.parse();
+            //this is the actionMessage object that is extracted from the parser:
             am=p.action_obj.actionMessage;
         } catch (Exception ex) {
             System.out.println("error"+ex.toString());

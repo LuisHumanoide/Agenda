@@ -16,6 +16,7 @@ import javax.swing.ListCellRenderer;
 import translator.DateUtils;
 
 /**
+ * window that will be used by the window agent
  *
  * @author Humanoide
  */
@@ -79,7 +80,7 @@ public class Intro extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * this is for customize the JList
+     * this is for customize the JList each day have a different color
      *
      * @param args the command line arguments
      */
@@ -112,7 +113,10 @@ public class Intro extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }
-
+/**
+ * class that represent the cell render, is used for bring format to jList
+ * @author Humanoide
+ */
 class MyListCellThing extends JLabel implements ListCellRenderer {
 
     ArrayList<Appointment> scheduleList;
@@ -132,8 +136,10 @@ class MyListCellThing extends JLabel implements ListCellRenderer {
 
         return this;
     }
+
     /**
      * return the color by the day of week of the appointment
+     *
      * @param day , day of the week
      * @return the color that will displayed in the list
      */

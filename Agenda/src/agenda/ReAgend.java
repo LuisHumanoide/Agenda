@@ -23,6 +23,7 @@ import javax.swing.JOptionPane;
 
 /**
  * ReAgend agent
+ *
  * @author Humanoide
  */
 public class ReAgend extends Agent {
@@ -33,30 +34,8 @@ public class ReAgend extends Agent {
     @Override
     protected void setup() {
         agents = null;
+        obtainAgents();
         /*=============================================================================
- |  this block is for identify the agents in the system
- *===========================================================================*/
-        try {
-            SearchConstraints c = new SearchConstraints();
-            c.setMaxResults(new Long(-1));
-            agents = AMSService.search(this, new AMSAgentDescription(), c);
-        } catch (Exception e) {
-            System.out.println("Problem searching AMS: " + e);
-            e.printStackTrace();
-        }
-
-        AID myID = getAID();
-        for (int i = 0; i < agents.length; i++) {
-            AID agentID = agents[i].getName();
-            System.out.println(
-                    (agentID.equals(myID) ? "*** " : "    ")
-                    + i + ": " + agentID.getName()
-            );
-        }
-        /*=============================================================================
- |  end of the identification
- *===========================================================================*/
- /*=============================================================================
         BEHAVIOR OF THE AGENT
  =============================================================================*/
         Behaviour receiveBehaviour = new CyclicBehaviour() {
@@ -114,8 +93,8 @@ public class ReAgend extends Agent {
                 the DATE will be on the Schedule (AGENDA)*/
                 try {
                     TwoAppointments ta2 = (TwoAppointments) in_pACLMessage.getContentObject();
-                        JOptionPane.showMessageDialog(null, "se va a reagendar " + ta2.oldAppoint);
-                        reAgendAppintment(ta2.oldAppoint);
+                    JOptionPane.showMessageDialog(null, "se va a reagendar " + ta2.oldAppoint);
+                    reAgendAppintment(ta2.oldAppoint);
                     updateList();
                 } catch (UnreadableException ex) {
                     Logger.getLogger(ReAgend.class.getName()).log(Level.SEVERE, null, ex);
@@ -212,6 +191,33 @@ public class ReAgend extends Agent {
         ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
         reply.addReceiver(getAgentByName("window").getName());
         send(reply);
+    }
+
+    /**
+     * get the list of the agents in the environment
+     */
+    public void obtainAgents() {
+        /*=============================================================================
+ |  this block is for identify the agents in the system
+ *===========================================================================*/
+        try {
+            SearchConstraints c = new SearchConstraints();
+            c.setMaxResults(new Long(-1));
+            agents = AMSService.search(this, new AMSAgentDescription(), c);
+        } catch (Exception e) {
+            System.out.println("Problem searching AMS: " + e);
+            e.printStackTrace();
+        }
+
+        AID myID = getAID();
+        for (int i = 0; i < agents.length; i++) {
+            AID agentID = agents[i].getName();
+            System.out.println(
+                    (agentID.equals(myID) ? "*** " : "    ")
+                    + i + ": " + agentID.getName()
+            );
+        }
+        //<------------------------------------------------------- end the identification
     }
 
 }

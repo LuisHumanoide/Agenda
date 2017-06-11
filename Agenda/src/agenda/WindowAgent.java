@@ -25,43 +25,26 @@ import javax.swing.JOptionPane;
 
 /**
  * the agent manage the window of the application
+ *
  * @author Humanoide
  */
-public class WindowAgent extends Agent implements MouseListener{
+public class WindowAgent extends Agent implements MouseListener {
+
     //list of agents in the system
     AMSAgentDescription[] agents;
     Intro in;
-    @Override
-    public void setup(){
-        agents = null;
- /*=============================================================================
- |  this block is for identify the agents in the system
- *===========================================================================*/
-        try {
-            SearchConstraints c = new SearchConstraints();
-            c.setMaxResults(new Long(-1));
-            agents = AMSService.search(this, new AMSAgentDescription(), c);
-        } catch (Exception e) {
-            System.out.println("Problem searching AMS: " + e);
-            e.printStackTrace();
-        }
 
-        AID myID = getAID();
-        for (int i = 0; i < agents.length; i++) {
-            AID agentID = agents[i].getName();
-            System.out.println(
-                    (agentID.equals(myID) ? "*** " : "    ")
-                    + i + ": " + agentID.getName()
-            );
-        }
-        //<------------------------------------------------------- end the identification
+    @Override
+    public void setup() {
+        agents = null;
+        obtainAgents();
         //new window interface
-        in=new Intro();
-        /*add a mouseListener for listen when in the window i do a click*/
+        in = new Intro();
+        /*add a mouseListener for listen when in the window I do a click*/
         in.execute.addMouseListener(this);
+        //show the window
         in.setVisible(true);
-        
-        
+
         /*=============================================================================
         BEHAVIOR OF THE AGENT
         =============================================================================*/
@@ -86,14 +69,15 @@ public class WindowAgent extends Agent implements MouseListener{
 
         //Add the behaviours for this agent to execute.
         addBehaviour(receiveBehaviour);
-        
+
     }
-    
+
     /**
      * method for processing the message
-     * @param in_pACLMessage 
+     *
+     * @param in_pACLMessage
      */
-     protected void ProcessMessage(ACLMessage in_pACLMessage) {
+    protected void ProcessMessage(ACLMessage in_pACLMessage) {
 
         System.out.println("Entered ProcessMessage method. with the ACL message: " + in_pACLMessage.toString());
         /*Switch used to decide which action must be taken BASED ON THE PERFORMATIVE, 
@@ -101,7 +85,7 @@ public class WindowAgent extends Agent implements MouseListener{
         switch (in_pACLMessage.getPerformative()) {
             case jade.lang.acl.ACLMessage.INFORM: {
                 /*receive the signal for update the list*/
-                   in.updateList(Schedule.ScheduleList);
+                in.updateList(Schedule.ScheduleList);
 
             }
             break;
@@ -133,21 +117,20 @@ public class WindowAgent extends Agent implements MouseListener{
             break;
         }
 
-
     }
-
 
     /**
      * when the button is pressed, the message will be send to the user agent
-     * @param e 
+     *
+     * @param e
      */
     @Override
     public void mouseClicked(MouseEvent e) {
-                    ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-                    msg.setContent(in.field.getText());
-                    msg.addReceiver(getAgentByName("user").getName());
-                    send(msg);
-       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+        msg.setContent(in.field.getText());
+        msg.addReceiver(getAgentByName("user").getName());
+        send(msg);
+        // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -162,15 +145,15 @@ public class WindowAgent extends Agent implements MouseListener{
 
     @Override
     public void mouseEntered(MouseEvent e) {
-       // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
-     /**
+
+    /**
      * return the agent by the name
      *
      * @param name , name of the agent
@@ -184,5 +167,32 @@ public class WindowAgent extends Agent implements MouseListener{
         }
         return null;
     }
-    
+
+    /**
+     * get the list of the agents in the environment
+     */
+    public void obtainAgents() {
+        /*=============================================================================
+ |  this block is for identify the agents in the system
+ *===========================================================================*/
+        try {
+            SearchConstraints c = new SearchConstraints();
+            c.setMaxResults(new Long(-1));
+            agents = AMSService.search(this, new AMSAgentDescription(), c);
+        } catch (Exception e) {
+            System.out.println("Problem searching AMS: " + e);
+            e.printStackTrace();
+        }
+
+        AID myID = getAID();
+        for (int i = 0; i < agents.length; i++) {
+            AID agentID = agents[i].getName();
+            System.out.println(
+                    (agentID.equals(myID) ? "*** " : "    ")
+                    + i + ": " + agentID.getName()
+            );
+        }
+        //<------------------------------------------------------- end the identification
+    }
+
 }

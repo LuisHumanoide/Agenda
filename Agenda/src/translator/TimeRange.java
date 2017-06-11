@@ -8,7 +8,8 @@ package translator;
 import java.util.Date;
 
 /**
- *
+ * class that represent the time-range , is composed by two dates, the start and the end
+ * is used in the parser
  * @author Humanoide
  */
 public class TimeRange {

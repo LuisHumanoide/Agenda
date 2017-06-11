@@ -6,7 +6,7 @@
 package agenda;
 
 /**
- *
+ * duration of the dates 
  * @author Humanoide
  */
 public class ConfigDuration {

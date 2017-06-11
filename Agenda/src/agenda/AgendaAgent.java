@@ -55,11 +55,13 @@ class Appointment implements Serializable, Comparable<Appointment> {
     public Date BeginDate;
     public Date EndDate;
     public float Priority;
+
     /**
      * constructor of the appointment
+     *
      * @param in_szPlaceOrPeople
      * @param in_BeginDate
-     * @param in_EndDate 
+     * @param in_EndDate
      */
     Appointment(String in_szPlaceOrPeople, Date in_BeginDate, Date in_EndDate) {
         PlaceOrPeople = in_szPlaceOrPeople;
@@ -201,37 +203,14 @@ public class AgendaAgent extends Agent {
     protected void setup() {
         InitializeCategoryWeights();
         agents = null;
-
- /*=============================================================================
- |  this block is for identify the agents in the system
- *===========================================================================*/
-        try {
-            SearchConstraints c = new SearchConstraints();
-            c.setMaxResults(new Long(-1));
-            agents = AMSService.search(this, new AMSAgentDescription(), c);
-        } catch (Exception e) {
-            System.out.println("Problem searching AMS: " + e);
-            e.printStackTrace();
-        }
-
-        AID myID = getAID();
-        for (int i = 0; i < agents.length; i++) {
-            AID agentID = agents[i].getName();
-            System.out.println(
-                    (agentID.equals(myID) ? "*** " : "    ")
-                    + i + ": " + agentID.getName()
-            );
-        }
-        //<------------------------------------------------------- end the identification
-
+        //obtain the agent list
+        obtainAgents();
+        //initialize the scheduleList to new array list
         Schedule.ScheduleList = new ArrayList();
         //Prints the local name of this agent.
-
-        System.out.println(getLocalName());
-
         ReadPriorityFiles(
                 "CategoryDictionary.txt");
-/*=============================================================================
+ /*=============================================================================
  |  behavior of the agent
  *===========================================================================*/
         Behaviour receiveBehaviour = new CyclicBehaviour() {
@@ -336,7 +315,7 @@ public class AgendaAgent extends Agent {
                         DeleteAppointment(ap);
                     }
                     /*ask for change the dates with low priorities*/
-                    ACLMessage changeAsk=new ACLMessage(ACLMessage.INFORM);
+                    ACLMessage changeAsk = new ACLMessage(ACLMessage.INFORM);
                     try {
                         changeAsk.setContentObject(ta2);
                     } catch (IOException ex) {
@@ -373,7 +352,7 @@ public class AgendaAgent extends Agent {
                         send(reply);
                     } else {
                         /*the agent reject the proposal by the user agent*/
-                        
+
                         if (ta2.oldAppoint != null) {
                             /*if is the case to update an appointment*/
                             reply = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
@@ -383,8 +362,8 @@ public class AgendaAgent extends Agent {
                             } catch (IOException ex) {
                                 Logger.getLogger(AgendaAgent.class.getName()).log(Level.SEVERE, null, ex);
                             }
-                        }else{
-                            ta2.oldAppoint=ta2.newAppoint;
+                        } else {
+                            ta2.oldAppoint = ta2.newAppoint;
                             reply = new ACLMessage(ACLMessage.AGREE);
                             try {
                                 reply.setContentObject(ta2);
@@ -430,7 +409,8 @@ public class AgendaAgent extends Agent {
         System.out.println("Exit the ProcessMessage method. ");
     }
 
-    /**add appointment to the schedule
+    /**
+     * add appointment to the schedule
      *
      * @param NewAppointment
      */
@@ -459,7 +439,8 @@ public class AgendaAgent extends Agent {
     }
 
     /**
-     * update the appointment, if the appointment is not update the oldAppointment will be insert again
+     * update the appointment, if the appointment is not update the
+     * oldAppointment will be insert again
      *
      * @param NewAppointment
      */
@@ -612,10 +593,12 @@ public class AgendaAgent extends Agent {
 
         return false; //If this point is reached, then no matching Appointment was present on Schedule (Agenda).
     }
+
     /**
      * find an appointment that match with the appointment to update
+     *
      * @param in_AppointmentToDelete is the Appointment to search
-     * @return 
+     * @return
      */
     protected Appointment findAppointment(Appointment in_Appointment) {
         Appointment appointment = null;
@@ -689,5 +672,32 @@ public class AgendaAgent extends Agent {
         //if value2 is gratter,.., this return true
         return value2 > value1;
 
+    }
+
+    /**
+     * get the list of the agents in the environment
+     */
+    public void obtainAgents() {
+        /*=============================================================================
+        |  this block is for identify the agents in the system
+        *===========================================================================*/
+        try {
+            SearchConstraints c = new SearchConstraints();
+            c.setMaxResults(new Long(-1));
+            agents = AMSService.search(this, new AMSAgentDescription(), c);
+        } catch (Exception e) {
+            System.out.println("Problem searching AMS: " + e);
+            e.printStackTrace();
+        }
+
+        AID myID = getAID();
+        for (int i = 0; i < agents.length; i++) {
+            AID agentID = agents[i].getName();
+            System.out.println(
+                    (agentID.equals(myID) ? "*** " : "    ")
+                    + i + ": " + agentID.getName()
+            );
+        }
+        //<------------------------------------------------------- end the identification
     }
 }
